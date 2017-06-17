@@ -1,0 +1,15 @@
+# gradle
+.gradle
+build/
+
+# eclipse
+.project
+.classpath
+coverage-report/
+
+# Intellij
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
