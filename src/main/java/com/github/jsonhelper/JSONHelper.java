@@ -1,95 +1,40 @@
 package com.github.jsonhelper;
 
-import java.util.Set;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.primitives.Doubles;
-import com.google.common.primitives.Floats;
+import com.github.jsonhelper.json.JSONOptimizer;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-public class JSONHelper  {
-	public static Predicate<Object> optimizePreidict = new Predicate<Object>() {
-		public boolean apply(Object input) {
-			if (input instanceof Integer) {
-				return (Integer)input == 0;
-			}
-			if (input instanceof Long) {
-				return (Long)input == 0;
-			}
-			if (input instanceof Boolean) {
-				return !(Boolean)input;
-			}
-			if (input instanceof String) {
-				return ((String)input).equals("");
-			}
-			if (input instanceof Float) {
-				return Floats.compare((Float)input, 0.0f) == 0;
-			}
-			if (input instanceof Double) {
-				return Doubles.compare((Double)input, 0.0d) == 0;
-			}
+/**
+ * Created by mi on 6/16/17.
+ */
+public class JSONHelper {
+    public static JSONObject optimizeObject(JSONObject jsonObject) {
+        if (jsonObject == null) {
+            return null;
+        }
+        return optimizeObjectWithOptimizer(jsonObject, generateJsonOptimizer());
+    }
 
-			return false;
-		}
-	};
+    public static JSONArray optimizeArray(JSONArray jsonArray) {
+        if (jsonArray == null) {
+            return null;
+        }
+        return optimizeArrayWithOptimizer(jsonArray, generateJsonOptimizer());
+    }
 
-	public static JSONObject optimizeObject(JSONObject jsonObject, boolean optimize) {
-        return optimizeObjectWithPredict(jsonObject, optimize, optimizePreidict);
-	}
+    private static JSONObject optimizeObjectWithOptimizer(JSONObject jsonObject,
+                                                          final JSONOptimizer jsonOptimizer) {
+        jsonOptimizer.optimizeObject(jsonObject);
+        return jsonObject;
+    }
 
-	public static JSONObject optimizeObjectWithPredict(JSONObject jsonObject, boolean optimize, Predicate<Object> predicate) {
-		if (optimize) {
-			return optimizeJSONObject(jsonObject, predicate);
-		}
+    private static JSONArray optimizeArrayWithOptimizer(JSONArray jsonArray,
+                                                        final JSONOptimizer jsonOptimizer) {
+        jsonOptimizer.optimizeArray(jsonArray);
+        return jsonArray;
+    }
 
-		return jsonObject;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static JSONObject optimizeJSONObject(final JSONObject jsonObject, final Predicate<Object> predicate) {
-		Set set = FluentIterable.from(jsonObject.keySet()).filter(new Predicate() {
-			public boolean apply(Object input) {
-				return predicate.apply(jsonObject.get(input));
-			}
-		}).toSet();
-
-		FluentIterable.from(set).allMatch(new Predicate() {
-			public boolean apply(Object input) {
-				jsonObject.remove(input);
-				return true;
-			}
-		});
-
-		return jsonObject;
-	}
-
-	public static JSONArray optimizeArray(JSONArray jsonArray, boolean optimize) {
-        return optimizeArrayWithPredict(jsonArray, optimize, optimizePreidict);
-	}
-
-	public static JSONArray optimizeArrayWithPredict(JSONArray jsonArray, boolean
-            optimize, Predicate<Object> predicate) {
-		if (optimize) {
-			return optimizeJSONArray(jsonArray, predicate);
-		}
-
-		return jsonArray;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static JSONArray optimizeJSONArray(JSONArray jsonArray, final Predicate<Object> predicate) {
-		FluentIterable.from(jsonArray).allMatch(new Predicate() {
-			public boolean apply(Object obj) {
-				if (obj instanceof JSONObject) {
-					optimizeJSONObject((JSONObject)obj, predicate);
-				} else if (obj instanceof JSONArray) {
-					optimizeJSONArray((JSONArray)obj, predicate);
-				}
-				return true;
-			}
-		});
-		return jsonArray;
-	}
+    private static JSONOptimizer generateJsonOptimizer() {
+        return new JSONOptimizer.Builder().build();
+    }
 }
